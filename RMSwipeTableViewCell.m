@@ -9,6 +9,9 @@
 #import "RMSwipeTableViewCell.h"
 
 @interface RMSwipeTableViewCell ()
+{
+    CGRect     _startFrame;
+}
 
 @end
 
@@ -91,6 +94,10 @@
             }
         }
     }
+    
+    if (panGestureRecognizer.state == UIGestureRecognizerStateBegan)
+        _startFrame = self.contentView.frame;
+    
     CGPoint actualTranslation = CGPointMake(panOffset, translation.y);
     if (panGestureRecognizer.state == UIGestureRecognizerStateBegan && [panGestureRecognizer numberOfTouches] > 0) {
         [self didStartSwiping];
@@ -114,12 +121,16 @@
 
 -(void)animateContentViewForPoint:(CGPoint)point velocity:(CGPoint)velocity {
     if ((point.x > 0 && self.revealDirection == RMSwipeTableViewCellRevealDirectionLeft) || (point.x < 0 && self.revealDirection == RMSwipeTableViewCellRevealDirectionRight) || self.revealDirection == RMSwipeTableViewCellRevealDirectionBoth) {
-        self.contentView.frame = CGRectOffset(self.contentView.bounds, point.x, 0);
+        self.contentView.frame = CGRectOffset(_startFrame, point.x, 0);
         if ([self.delegate respondsToSelector:@selector(swipeTableViewCell:didSwipeToPoint:velocity:)]) {
             [self.delegate swipeTableViewCell:self didSwipeToPoint:point velocity:velocity];
         }
     } else if ((point.x > 0 && self.revealDirection == RMSwipeTableViewCellRevealDirectionRight) || (point.x < 0 && self.revealDirection == RMSwipeTableViewCellRevealDirectionLeft)) {
-        self.contentView.frame = CGRectOffset(self.contentView.bounds, 0, 0);
+        RMSwipeTableViewCellRevealDirection _tmp = self.revealDirection;
+        self.revealDirection = RMSwipeTableViewCellRevealDirectionBoth;
+        [self resetCellFromPoint:point velocity:velocity];
+        self.revealDirection = _tmp;
+//        self.contentView.frame = CGRectOffset(self.contentView.bounds, 0, 0);
     }
 }
 
